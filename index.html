@@ -1,0 +1,149 @@
+﻿<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StampForge — Generatore Stampi 3D da SVG</title>
+  <meta name="description" content="Crea stampi 3D positivi e negativi da file SVG per incisioni su alluminio e altri materiali. Esporta STL per stampa 3D.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+  <!-- Text tool fonts (lazy) -->
+  <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Pacifico&family=Permanent+Marker&family=Playfair+Display:wght@700&family=Roboto:wght@700&family=Righteous&family=Abril+Fatface&family=Fredoka+One&family=Bebas+Neue&family=Anton&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <link rel="stylesheet" href="style.css">
+  
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+  <header id="app-header">
+    <div class="logo-area">
+      <h1 class="logo-text">StampForge</h1>
+      <span class="subtitle">SVG → Stampi 3D</span>
+    </div>
+  </header>
+
+  <div id="main-layout">
+    <aside id="control-panel">
+      
+      <section id="upload-section">
+        <h3>CARICA SVG</h3>
+        <div id="drop-zone">
+          <button id="upload-btn">CARICA LOGO (SVG) &darr;</button>
+          <input type="file" id="svg-input" accept=".svg" style="display: none;">
+          <p>o trascina un file .SVG qui</p>
+        </div>
+        <div id="file-info" style="display: none;">
+          <span id="file-name"></span>
+          <button id="remove-file-btn">&times;</button>
+        </div>
+      </section>
+
+      <section id="text-section">
+        <h3>TESTO PERSONALIZZATO</h3>
+        <textarea id="text-input" placeholder="Scrivi il tuo testo..." maxlength="40"></textarea>
+        <div class="text-controls">
+          <select id="font-select">
+            <option value="Lobster">Lobster</option>
+            <option value="Pacifico">Pacifico</option>
+            <option value="Permanent Marker">Permanent Marker</option>
+            <option value="Playfair Display">Playfair Display</option>
+            <option value="Roboto">Roboto</option>
+            <option value="Righteous">Righteous</option>
+            <option value="Abril Fatface">Abril Fatface</option>
+            <option value="Fredoka One">Fredoka One</option>
+            <option value="Bebas Neue">Bebas Neue</option>
+            <option value="Anton">Anton</option>
+          </select>
+          <span id="char-count">0/40</span>
+        </div>
+        <button id="apply-text-btn">APPLICA TESTO ALLO STAMPO</button>
+      </section>
+
+      <section id="params-section">
+        <h3>PARAMETRI STAMPO</h3>
+        <div class="param-row">
+          <div class="param-label-group">
+            <label>Larghezza (mm)</label>
+            <span id="val-width">60</span>
+          </div>
+          <input type="range" id="param-width" min="20" max="150" value="60" step="1">
+        </div>
+        <div class="param-row">
+          <div class="param-label-group">
+            <label>Altezza (mm)</label>
+            <span id="val-height">80</span>
+          </div>
+          <input type="range" id="param-height" min="20" max="150" value="80" step="1">
+        </div>
+        <div class="param-row">
+          <div class="param-label-group">
+            <label>Spessore Base (mm)</label>
+            <span id="val-base">3</span>
+          </div>
+          <input type="range" id="param-base" min="1" max="10" value="3" step="0.5">
+        </div>
+        <div class="param-row">
+          <div class="param-label-group">
+            <label>Profondità Rilievo (mm)</label>
+            <span id="val-depth">1.5</span>
+          </div>
+          <input type="range" id="param-depth" min="0.3" max="5" value="1.5" step="0.1">
+        </div>
+        <div class="param-row">
+          <div class="param-label-group">
+            <label>Margine Bordo (mm)</label>
+            <span id="val-margin">5</span>
+          </div>
+          <input type="range" id="param-margin" min="2" max="20" value="5" step="1">
+        </div>
+        <div class="param-row">
+          <div class="param-label-group">
+            <label>Raggio Angoli (mm)</label>
+            <span id="val-radius">3</span>
+          </div>
+          <input type="range" id="param-radius" min="0" max="15" value="3" step="1">
+        </div>
+        
+        <div class="toggle-row">
+          <label for="toggle-pins">Pin di Allineamento</label>
+          <input type="checkbox" id="toggle-pins" checked>
+        </div>
+        <div class="toggle-row">
+          <label for="toggle-mirror">Specchia Design</label>
+          <input type="checkbox" id="toggle-mirror">
+        </div>
+      </section>
+
+      <section id="view-section">
+        <h3>VISUALIZZAZIONE</h3>
+        <div class="view-btn-group">
+          <button class="view-btn active" data-view="both">Entrambi</button>
+          <button class="view-btn" data-view="positive">Positivo</button>
+          <button class="view-btn" data-view="negative">Negativo</button>
+        </div>
+      </section>
+
+      <section id="export-section">
+        <button id="export-positive-btn" class="export-btn">&darr; ESPORTA POSITIVO (STL)</button>
+        <button id="export-negative-btn" class="export-btn">&darr; ESPORTA NEGATIVO (STL)</button>
+        <button id="export-both-btn" class="export-btn primary">&darr; ESPORTA ENTRAMBI</button>
+      </section>
+      
+    </aside>
+
+    <main id="viewport">
+      <div id="viewport-hint">Carica un SVG o aggiungi testo per iniziare</div>
+      <canvas id="three-canvas"></canvas>
+    </main>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
