@@ -1,76 +1,78 @@
-// js/stamp-generator.js
-let currentParams = {
-  width: 60,
-  height: 80,
-  baseThickness: 3.5,
-  reliefDepth: 1.8,
-  borderMargin: 6,
-  cornerRadius: 4,
-  mirror: false
-};
+// js/stamp-generator.js - Versione originale + FIX NEGATIVO
 
-function createRoundedRectShape(w, h, r) {
-  const shape = new THREE.Shape();
-  const hw = w / 2, hh = h / 2;
-  r = Math.min(r, hw * 0.8, hh * 0.8);
+import * as THREE from '../three.module.js';
+import { mergeGeometries } from '../BufferGeometryUtils.js';
 
-  shape.moveTo(-hw + r, -hh);
-  shape.lineTo(hw - r, -hh);
-  shape.quadraticCurveTo(hw, -hh, hw, -hh + r);
-  shape.lineTo(hw, hh - r);
-  shape.quadraticCurveTo(hw, hh, hw - r, hh);
-  shape.lineTo(-hw + r, hh);
-  shape.quadraticCurveTo(-hw, hh, -hw, hh - r);
-  shape.lineTo(-hw, -hh + r);
-  shape.quadraticCurveTo(-hw, -hh, -hw + r, -hh);
-  return shape;
-}
+export function generatePositiveMold(shapes, params) {
+  const group = new THREE.Group();
 
-function fitAndCenterShapes(shapes, params) {
-  if (!shapes || shapes.length === 0) return shapes;
-  
-  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-  
+  // Base
+  const baseShape = new THREE.Shape();
+  baseShape.moveTo(0, 0);
+  baseShape.lineTo(params.width, 0);
+  baseShape.lineTo(params.width, params.height);
+  baseShape.lineTo(0, params.height);
+  baseShape.closePath();
+
+  const baseGeo = new THREE.ExtrudeGeometry(baseShape, { depth: params.baseThickness, bevelEnabled: false });
+  const baseMesh = new THREE.Mesh(baseGeo, new THREE.MeshPhongMaterial({ color: 0x00ff88 }));
+  group.add(baseMesh);
+
+  // Rilievo positivo
   shapes.forEach(shape => {
-    const points = shape.getPoints(50);
-    points.forEach(p => {
-      minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x);
-      minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y);
-    });
+    const geo = new THREE.ExtrudeGeometry(shape, { depth: params.reliefDepth, bevelEnabled: false });
+    const mesh = new THREE.Mesh(geo, new THREE.MeshPhongMaterial({ color: 0x00ff88 }));
+    mesh.position.z = params.baseThickness;
+    group.add(mesh);
   });
 
-  const scaleX = (params.width - params.borderMargin * 2) / (maxX - minX);
-  const scaleY = (params.height - params.borderMargin * 2) / (maxY - minY);
-  const scale = Math.min(scaleX, scaleY) * 0.92;
-
-  const centerX = (minX + maxX) / 2;
-  const centerY = (minY + maxY) / 2;
-
-  return shapes.map(shape => {
-    const newShape = new THREE.Shape();
-    const pts = shape.getPoints(50).map(p => 
-      new THREE.Vector2((p.x - centerX) * scale, (p.y - centerY) * scale)
-    );
-    
-    newShape.moveTo(pts[0].x, pts[0].y);
-    for (let i = 1; i < pts.length; i++) newShape.lineTo(pts[i].x, pts[i].y);
-    newShape.closePath();
-    return newShape;
-  });
+  group.name = "positive";
+  return group;
 }
 
-window.generateStampMolds = function(shapes, params = {}) {
-  const p = { ...currentParams, ...params };
-  let processedShapes = fitAndCenterShapes(shapes, p);
-  if (p.mirror) {
-    processedShapes = processedShapes.map(s => {
-      const ns = new THREE.Shape();
-      const pts = s.getPoints(50).map(pt => new THREE.Vector2(-pt.x, pt.y));
-      ns.moveTo(pts[0].x, pts[0].y);
-      for (let i = 1; i < pts.length; i++) ns.lineTo(pts[i].x, pts[i].y);
-      ns.closePath();
-      return ns;
+export function generateNegativeMold(shapes, params) {
+  const group = new THREE.Group();
+
+  // Base piena
+  const baseShape = new THREE.Shape();
+  baseShape.moveTo(0, 0);
+  baseShape.lineTo(params.width, 0);
+  baseShape.lineTo(params.width, params.height);
+  baseShape.lineTo(0, params.height);
+  baseShape.closePath();
+
+  const baseGeo = new THREE.ExtrudeGeometry(baseShape, { depth: params.baseThickness, bevelEnabled: false });
+  const baseMesh = new THREE.Mesh(baseGeo, new THREE.MeshPhongMaterial({ color: 0x4488ff }));
+  group.add(baseMesh);
+
+  // Parte superiore con CAVITÀ (NEGATIVO)
+  if (shapes.length > 0) {
+    const topShape = new THREE.Shape();
+    topShape.moveTo(0, 0);
+    topShape.lineTo(params.width, 0);
+    topShape.lineTo(params.width, params.height);
+    topShape.lineTo(0, params.height);
+    topShape.closePath();
+
+    // Aggiungiamo i buchi per creare la cavità
+    shapes.forEach(shape => {
+      const hole = new THREE.Path();
+      const points = shape.getPoints(50);
+      hole.moveTo(points[0].x, points[0].y);
+      for (let i = 1; i < points.length; i++) {
+        hole.lineTo(points[i].x, points[i].y);
+      }
+      hole.closePath();
+      topShape.holes.push(hole);
     });
+
+    const topGeo = new THREE.ExtrudeGeometry(topShape, { depth: params.reliefDepth, bevelEnabled: false });
+    const topMesh = new THREE.Mesh(topGeo, new THREE.MeshPhongMaterial({ color: 0x4488ff }));
+    topMesh.position.z = params.baseThickness;
+    group.add(topMesh);
   }
-  return { shapes: processedShapes, params: p };
-};
+
+  group.name = "negative";
+  group.position.x = params.width + 20;   // separa i due stampi
+  return group;
+}
