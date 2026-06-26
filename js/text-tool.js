@@ -3,16 +3,11 @@ import { SVGLoader } from 'three/addons/loaders/SVGLoader.js';
 import { parseSVGFromString } from './svg-parser.js';
 
 export const AVAILABLE_FONTS = [
-  { name: 'Lobster', family: 'Lobster', url: 'https://fonts.gstatic.com/s/lobster/v30/neILzCirqoNuEjz2lCkh.ttf' },
-  { name: 'Pacifico', family: 'Pacifico', url: 'https://fonts.gstatic.com/s/pacifico/v22/FwZY7-Qmy14u9lezJ96A.ttf' },
-  { name: 'Permanent Marker', family: 'Permanent Marker', url: 'https://fonts.gstatic.com/s/permanentmarker/v16/Fh4uPib9Iyv2ucM6pGQMWimMp004HaqI.ttf' },
-  { name: 'Playfair Display', family: 'Playfair Display', url: 'https://fonts.gstatic.com/s/playfairdisplay/v37/nuFvD-vYSZviVYUb_rj3ij__anPXJzDwcbmjWBN2PKdFvXDXbtM.ttf' },
-  { name: 'Roboto', family: 'Roboto', url: 'https://fonts.gstatic.com/s/roboto/v30/KFOlCnqEu92Fr1MmWUlfBBc4.ttf' },
-  { name: 'Righteous', family: 'Righteous', url: 'https://fonts.gstatic.com/s/righteous/v17/1cXxaUPXBpj2rGoU7C9mj3uE.ttf' },
-  { name: 'Abril Fatface', family: 'Abril Fatface', url: 'https://fonts.gstatic.com/s/abrilfatface/v23/zOL64pLDlL1D99S8HAFadkA0rciL.ttf' },
-  { name: 'Fredoka One', family: 'Fredoka One', url: 'https://fonts.gstatic.com/s/fredokaone/v14/k3kUo8kEI-tA1RRcTZGmTmHB.ttf' },
-  { name: 'Bebas Neue', family: 'Bebas Neue', url: 'https://fonts.gstatic.com/s/bebasneue/v14/JTUSjIg69CK48gW7PXooxW4.ttf' },
-  { name: 'Anton', family: 'Anton', url: 'https://fonts.gstatic.com/s/anton/v25/1Ptgg87GJOGpg078.ttf' },
+  { name: 'Lobster', family: 'Lobster', url: '/fonts/Lobster.ttf' },
+  { name: 'Pacifico', family: 'Pacifico', url: '/fonts/Pacifico.ttf' },
+  { name: 'Permanent Marker', family: 'Permanent Marker', url: '/fonts/PermanentMarker.ttf' },
+  { name: 'Righteous', family: 'Righteous', url: '/fonts/Righteous.ttf' },
+  { name: 'Anton', family: 'Anton', url: '/fonts/Anton.ttf' }
 ];
 
 const fontCache = new Map();
@@ -49,3 +44,5 @@ export async function textToShapes(text, fontName, fontSize = 72) {
   const { shapes } = parseSVGFromString(svgString);
   return shapes;
 }
+
+
