@@ -3,235 +3,150 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>StampForge - Generatore Stampi 3D</title>
-  <meta name="description" content="StampForge: crea stampi 3D professionali da SVG o testo. Esporta in formato STL per la stampa 3D.">
-
-  <!-- Three.js r134 dalla CDN (namespace globale THREE) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
-  <!-- SVGLoader da CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/three@0.134.0/examples/js/loaders/SVGLoader.js"></script>
-  <!-- OrbitControls da CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/three@0.134.0/examples/js/controls/OrbitControls.js"></script>
-
-  <style>
-    :root {
-      --bg: #0a0a0a;
-      --panel: #111111;
-      --accent: #00ff9d;
-      --accent2: #4488ff;
-      --text: #eeeeee;
-      --muted: #888;
-      --border: #222;
+  <title>StampForge — Generatore Stampi 3D da SVG</title>
+  <meta name="description" content="Crea stampi 3D positivi e negativi da file SVG per incisioni su alluminio e altri materiali. Esporta STL per stampa 3D.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+  <!-- Text tool fonts (lazy) -->
+  <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Pacifico&family=Permanent+Marker&family=Playfair+Display:wght@700&family=Roboto:wght@700&family=Righteous&family=Abril+Fatface&family=Fredoka+One&family=Bebas+Neue&family=Anton&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <link rel="stylesheet" href="style.css">
+  
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
     }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: 'Segoe UI', system-ui, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      height: 100vh;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-    }
-    header {
-      background: #0f0f0f;
-      padding: 12px 25px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      gap: 15px;
-      flex-shrink: 0;
-    }
-    h1 { color: var(--accent); font-size: 24px; letter-spacing: 3px; }
-    header p { color: var(--muted); font-size: 0.85rem; }
-    .main { display: flex; flex: 1; overflow: hidden; }
-    .sidebar {
-      width: 320px;
-      background: var(--panel);
-      border-right: 1px solid var(--border);
-      padding: 16px;
-      overflow-y: auto;
-      flex-shrink: 0;
-    }
-    .viewer { flex: 1; position: relative; background: #000; }
-    canvas { display: block; width: 100% !important; height: 100% !important; }
-
-    .control-group { margin-bottom: 18px; }
-    .control-group h3 {
-      color: var(--accent);
-      font-size: 0.8rem;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      margin-bottom: 10px;
-      padding-bottom: 6px;
-      border-bottom: 1px solid var(--border);
-    }
-    label {
-      display: block;
-      margin-bottom: 6px;
-      font-size: 0.85rem;
-      color: var(--muted);
-    }
-    input[type="range"] { width: 100%; accent-color: var(--accent); margin-bottom: 4px; }
-    input[type="text"], select {
-      width: 100%;
-      padding: 8px 10px;
-      background: #1a1a1a;
-      border: 1px solid var(--border);
-      border-radius: 5px;
-      color: white;
-      font-size: 0.9rem;
-      margin-bottom: 6px;
-    }
-    input[type="file"] {
-      width: 100%;
-      padding: 6px;
-      background: #1a1a1a;
-      color: var(--muted);
-      border: 1px solid var(--border);
-      border-radius: 5px;
-      font-size: 0.8rem;
-    }
-    button {
-      background: #1a1a1a;
-      color: var(--accent);
-      border: 1px solid var(--accent);
-      padding: 9px 14px;
-      border-radius: 6px;
-      cursor: pointer;
-      width: 100%;
-      font-size: 0.85rem;
-      margin-top: 6px;
-      transition: background 0.2s, color 0.2s;
-    }
-    button:hover { background: var(--accent); color: #000; }
-    button.primary {
-      background: var(--accent);
-      color: #000;
-      font-weight: bold;
-      font-size: 0.9rem;
-    }
-    button.primary:hover { background: #00cc7a; }
-    button.secondary {
-      color: var(--accent2);
-      border-color: var(--accent2);
-    }
-    button.secondary:hover { background: var(--accent2); color: #fff; }
-    .checkbox-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-top: 8px;
-      font-size: 0.85rem;
-      color: var(--muted);
-    }
-    input[type="checkbox"] { accent-color: var(--accent); }
-    .error-msg { color: #ff4444; font-size: 0.78rem; margin-top: 4px; min-height: 16px; }
-
-    .loader {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: rgba(0,0,0,0.92);
-      padding: 24px 40px;
-      border-radius: 12px;
-      border: 1px solid var(--accent);
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      z-index: 100;
-      gap: 12px;
-    }
-    .spinner {
-      width: 36px;
-      height: 36px;
-      border: 3px solid #222;
-      border-top: 3px solid var(--accent);
-      border-radius: 50%;
-      animation: spin 0.9s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    .divider { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
-
-    ::-webkit-scrollbar { width: 5px; }
-    ::-webkit-scrollbar-track { background: #0a0a0a; }
-    ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
-  </style>
+  }
+  </script>
 </head>
 <body>
-  <header>
-    <h1>⬡ STAMPFORGE</h1>
-    <p>SVG &amp; Testo → Stampi 3D Professionali</p>
+  <header id="app-header">
+    <div class="logo-area">
+      <h1 class="logo-text">StampForge</h1>
+      <span class="subtitle">SVG → Stampi 3D</span>
+    </div>
   </header>
 
-  <div class="main">
-    <!-- Sidebar -->
-    <div class="sidebar">
+  <div id="main-layout">
+    <aside id="control-panel">
+      
+      <section id="upload-section">
+        <h3>CARICA SVG</h3>
+        <div id="drop-zone">
+          <button id="upload-btn">CARICA LOGO (SVG) &darr;</button>
+          <input type="file" id="svg-input" accept=".svg" style="display: none;">
+          <p>o trascina un file .SVG qui</p>
+        </div>
+        <div id="file-info" style="display: none;">
+          <span id="file-name"></span>
+          <button id="remove-file-btn">&times;</button>
+        </div>
+      </section>
 
-      <div class="control-group">
-        <h3>📁 Carica SVG</h3>
-        <input type="file" id="svg-upload" accept=".svg">
-      </div>
+      <section id="text-section">
+        <h3>TESTO PERSONALIZZATO</h3>
+        <textarea id="text-input" placeholder="Scrivi il tuo testo..." maxlength="40"></textarea>
+        <div class="text-controls">
+          <select id="font-select">
+            <option value="Lobster">Lobster</option>
+            <option value="Pacifico">Pacifico</option>
+            <option value="Permanent Marker">Permanent Marker</option>
+            <option value="Righteous">Righteous</option>
+            <option value="Anton">Anton</option>
+          </select>
+          <span id="char-count">0/40</span>
+        </div>
+        <button id="apply-text-btn">APPLICA TESTO ALLO STAMPO</button>
+      </section>
 
-      <hr class="divider">
+      <section id="params-section">
+        <h3>PARAMETRI STAMPO</h3>
+        <div class="param-row">
+          <div class="param-label-group">
+            <label>Larghezza (mm)</label>
+            <span id="val-width">60</span>
+          </div>
+          <input type="range" id="param-width" min="20" max="150" value="60" step="1">
+        </div>
+        <div class="param-row">
+          <div class="param-label-group">
+            <label>Altezza (mm)</label>
+            <span id="val-height">80</span>
+          </div>
+          <input type="range" id="param-height" min="20" max="150" value="80" step="1">
+        </div>
+        <div class="param-row">
+          <div class="param-label-group">
+            <label>Spessore Base (mm)</label>
+            <span id="val-base">3</span>
+          </div>
+          <input type="range" id="param-base" min="1" max="10" value="3" step="0.5">
+        </div>
+        <div class="param-row">
+          <div class="param-label-group">
+            <label>Profondità Rilievo (mm)</label>
+            <span id="val-depth">1.5</span>
+          </div>
+          <input type="range" id="param-depth" min="0.3" max="5" value="1.5" step="0.1">
+        </div>
+        <div class="param-row">
+          <div class="param-label-group">
+            <label>Margine Bordo (mm)</label>
+            <span id="val-margin">5</span>
+          </div>
+          <input type="range" id="param-margin" min="2" max="20" value="5" step="1">
+        </div>
+        <div class="param-row">
+          <div class="param-label-group">
+            <label>Raggio Angoli (mm)</label>
+            <span id="val-radius">3</span>
+          </div>
+          <input type="range" id="param-radius" min="0" max="15" value="3" step="1">
+        </div>
+        
+        <div class="toggle-row">
+          <label for="toggle-pins">Pin di Allineamento</label>
+          <input type="checkbox" id="toggle-pins" checked>
+        </div>
+        <div class="toggle-row">
+          <label for="toggle-mirror">Specchia Design</label>
+          <input type="checkbox" id="toggle-mirror">
+        </div>
+        <div class="toggle-row">
+          <label for="toggle-hinge">Chiusura a Cerniera</label>
+          <input type="checkbox" id="toggle-hinge">
+        </div>
+      </section>
 
-      <div class="control-group">
-        <h3>✏️ Testo Personalizzato</h3>
-        <input type="text" id="custom-text" placeholder="Es: Ferrari">
-        <label>Font</label>
-        <select id="font-select"></select>
-        <button id="apply-text">Applica Testo allo Stampo</button>
-        <div class="error-msg" id="text-error"></div>
-      </div>
+      <section id="view-section">
+        <h3>VISUALIZZAZIONE</h3>
+        <div class="view-btn-group">
+          <button class="view-btn active" data-view="both">Entrambi</button>
+          <button class="view-btn" data-view="positive">Positivo</button>
+          <button class="view-btn" data-view="negative">Negativo</button>
+        </div>
+      </section>
 
-      <hr class="divider">
+      <section id="export-section">
+        <button id="export-positive-btn" class="export-btn">&darr; ESPORTA POSITIVO (STL)</button>
+        <button id="export-negative-btn" class="export-btn">&darr; ESPORTA NEGATIVO (STL)</button>
+        <button id="export-both-btn" class="export-btn primary">&darr; ESPORTA ENTRAMBI</button>
+      </section>
+      
+    </aside>
 
-      <div class="control-group">
-        <h3>⚙️ Parametri Stampo</h3>
-        <label>Larghezza (mm): <strong id="val-width">60</strong></label>
-        <input type="range" id="width" min="40" max="120" value="60">
-
-        <label>Altezza (mm): <strong id="val-height">80</strong></label>
-        <input type="range" id="height" min="40" max="120" value="80">
-
-        <label>Profondità Rilievo (mm): <strong id="val-relief">1.8</strong></label>
-        <input type="range" id="relief" min="0.5" max="3" step="0.1" value="1.8">
-
-        <label class="checkbox-row">
-          <input type="checkbox" id="mirror-toggle"> Specchia Design
-        </label>
-      </div>
-
-      <button id="btn-generate" class="primary">⚡ GENERA STAMPI 3D</button>
-      <button id="btn-reset-camera">🎥 Reset Camera</button>
-
-      <hr class="divider">
-
-      <div class="control-group">
-        <h3>💾 Esporta STL</h3>
-        <button id="export-positive-btn" class="secondary">⬇ Esporta Positivo</button>
-        <button id="export-negative-btn" class="secondary">⬇ Esporta Negativo</button>
-        <button id="export-both-btn">📦 Esporta Stampo Unico</button>
-      </div>
-
-    </div>
-
-    <!-- 3D Viewer -->
-    <div class="viewer">
-      <canvas id="canvas"></canvas>
-      <div id="loader" class="loader">
-        <div class="spinner"></div>
-        <div>Generazione stampi in corso...</div>
-      </div>
-    </div>
+    <main id="viewport">
+      <div id="viewport-hint">Carica un SVG o aggiungi testo per iniziare</div>
+      <canvas id="three-canvas"></canvas>
+    </main>
   </div>
 
-  <!-- Script nell'ordine corretto: nessun ES module, tutto globale -->
-  <script src="js/stamp-generator.js"></script>
-  <script src="js/stl-exporter.js"></script>
-  <script src="js/text-tool.js"></script>
-  <script src="js/app.js"></script>
+  <script type="module" src="js/app.js?v=6"></script>
 </body>
 </html>
+
+
+
+
