@@ -12,6 +12,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Pacifico&family=Permanent+Marker&family=Playfair+Display:wght@700&family=Roboto:wght@700&family=Righteous&family=Abril+Fatface&family=Fredoka+One&family=Bebas+Neue&family=Anton&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
   <link rel="stylesheet" href="style.css">
   
+  <script src="https://cdn.jsdelivr.net/npm/imagetracerjs@1.2.6/imagetracer_v1.2.6.js"></script>
   <script type="importmap">
   {
     "imports": {
@@ -27,17 +28,20 @@
       <h1 class="logo-text">StampForge</h1>
       <span class="subtitle">SVG → Stampi 3D</span>
     </div>
+    <div class="credits-area" style="margin-left: auto; font-family: 'Space Mono', monospace; font-size: 0.85rem; color: #888;">
+      Sviluppato da <a href="https://3dlabmassafra.it" target="_blank" style="color: var(--accent, #00fe7b); text-decoration: none; font-weight: bold; border-bottom: 1px dashed var(--accent, #00fe7b); padding-bottom: 2px;">3DLabMassafra.it</a>
+    </div>
   </header>
 
   <div id="main-layout">
     <aside id="control-panel">
       
       <section id="upload-section">
-        <h3>CARICA SVG</h3>
+        <h3>CARICA LOGO / IMMAGINE</h3>
         <div id="drop-zone">
-          <button id="upload-btn">CARICA LOGO (SVG) &darr;</button>
-          <input type="file" id="svg-input" accept=".svg" style="display: none;">
-          <p>o trascina un file .SVG qui</p>
+          <button id="upload-btn">CARICA LOGO / IMMAGINE &darr;</button>
+          <input type="file" id="svg-input" accept=".svg,.png,.jpg,.jpeg,.webp" style="display: none;">
+          <p>SVG, PNG, JPG, WEBP (conversione automatica)</p>
         </div>
         <div id="file-info" style="display: none;">
           <span id="file-name"></span>
@@ -134,6 +138,10 @@
         <button id="export-negative-btn" class="export-btn">&darr; ESPORTA NEGATIVO (STL)</button>
         <button id="export-both-btn" class="export-btn primary">&darr; ESPORTA ENTRAMBI</button>
       </section>
+      
+      <footer style="margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.06); text-align: center; font-size: 0.72rem; color: #555; font-family: 'Space Mono', monospace; width: 100%;">
+        Sviluppato da <a href="https://3dlabmassafra.it" target="_blank" style="color: #777; text-decoration: underline;">3DLabMassafra.it</a>
+      </footer>
       
     </aside>
 

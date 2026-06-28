@@ -1,6 +1,6 @@
 ﻿import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { parseSVGFromFile } from './svg-parser.js';
+import { parseSVGFromFile, parseSVGFromString } from './svg-parser.js';
 import { textToShapes } from './text-tool.js?v=6';
 import { generateStampMolds, updateStampMolds } from './stamp-generator.js?v=6';
 import { exportSTL, exportBothSTL, exportSingleSTL } from './stl-exporter.js';
@@ -253,24 +253,69 @@ function setupUI() {
 }
 
 async function handleFileUpload(file) {
-  if (!file.name.toLowerCase().endsWith('.svg')) {
-    alert('Per favore carica un file SVG valido.');
+  const fileName = file.name.toLowerCase();
+  const isSvg = fileName.endsWith('.svg');
+  const isImg = fileName.endsWith('.png') || fileName.endsWith('.jpg') || fileName.endsWith('.jpeg') || fileName.endsWith('.webp');
+
+  if (!isSvg && !isImg) {
+    alert('Carica un file valido (SVG, PNG, JPG, JPEG, WEBP).');
     return;
   }
   
   document.getElementById('file-name').textContent = file.name;
   document.getElementById('file-info').style.display = 'flex';
   
+  const uploadBtn = document.getElementById('upload-btn');
+  const originalText = uploadBtn.textContent;
+  
   try {
-    const { shapes } = await parseSVGFromFile(file);
+    let shapes = [];
+    if (isSvg) {
+      const res = await parseSVGFromFile(file);
+      shapes = res.shapes;
+    } else {
+      uploadBtn.textContent = 'TRACCIAMENTO...';
+      const dataURL = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = e => resolve(e.target.result);
+        reader.onerror = err => reject(err);
+        reader.readAsDataURL(file);
+      });
+
+      const svgString = await new Promise((resolve, reject) => {
+        const options = {
+          ltres: 1,
+          qtres: 1,
+          pathomit: 8,
+          colorsampling: 1,
+          numberofcolors: 2,
+          mincolorratio: 0.1,
+          colorquantcycles: 1,
+          scale: 1
+        };
+        ImageTracer.imageToSVG(
+          dataURL,
+          svgstr => resolve(svgstr),
+          options
+        );
+      });
+
+      const res = parseSVGFromString(svgString);
+      shapes = res.shapes;
+    }
+
     if (shapes.length === 0) {
-      alert('Nessun path trovato nel file SVG.');
+      alert('Nessun tracciato trovato nel file.');
+      uploadBtn.textContent = originalText;
       return;
     }
     currentShapes = shapes;
     updateMolds();
   } catch (err) {
-    alert('Errore lettura SVG: ' + err.message);
+    alert('Errore caricamento: ' + err.message);
+    console.error(err);
+  } finally {
+    uploadBtn.textContent = originalText;
   }
 }
 
